@@ -97,7 +97,7 @@ if submit_button:
 
             with st.spinner("전문가 페르소나가 책과 작가 정보를 분석하고 고품질 문항을 출제하는 중입니다..."):
                 model = genai.GenerativeModel(
-                    model_name="gemini-1.5-flash",
+                    model_name="gemini-3.5-flash",
                     system_instruction=system_prompt
                 )
                 
