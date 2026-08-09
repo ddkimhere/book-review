@@ -12,10 +12,11 @@ st.caption("초·중등 독서교육 전문가 맞춤형 퀴즈 출제 프로그
 # Google API 키 입력받기 (비밀번호 형태로 숨김 처리)
 user_api_key = st.text_input("Google API Key를 입력하세요", type="password")
 
-# 사용자 입력 폼
+# 사용자 입력 폼 (학년, 책 제목, 작가 이름 추가)
 with st.form("expert_quiz_form"):
     grade = st.text_input("학년을 입력하세요 (예: 초등학교 3학년, 중학교 2학년)", value="중학교 2학년")
     book_title = st.text_input("책 제목을 입력하세요 (예: 난쟁이가 쏘아 올린 작은 공)", value="")
+    author_name = st.text_input("작가 이름을 입력하세요 (한글 또는 영어, 예: 조세희 / Cho Se-hui)", value="")
     submit_button = st.form_submit_button(label="전문가 퀴즈 생성하기")
 
 if submit_button:
@@ -30,10 +31,10 @@ if submit_button:
             
             system_prompt = """
 당신은 20년 경력의 초·중등 국어 독서교육 전문가이자 교육부 권장도서 독서활동 평가문항 출제위원이다.
-사용자는 [책 제목]과 [학년]만 입력한다. 당신은 실제 책 내용을 기반으로 독서 이해 문제를 만든다.
+사용자는 [책 제목], [작가 이름], [학년]을 입력한다. 당신은 입력된 도서와 작가 정보를 바탕으로 실제 책 내용을 정확히 검증하여 독서 이해 문제를 만든다.
 
 [가장 중요한 규칙]
-- 책 내용을 정확히 알고 있는 경우에만 문제를 출제한다.
+- 책 내용과 작가를 정확히 알고 있는 경우에만 문제를 출제한다.
 - 내용을 정확히 확인할 수 없는 경우에는 절대로 추측하여 문제를 만들지 않는다.
 - 대신 아래와 같이 답변한다:
   "이 책의 내용을 정확하게 확인할 수 없습니다.
@@ -67,12 +68,12 @@ if submit_button:
 2. 정답지 섹션 시작할 때: [정답지] 라고 적어주세요. (여기에는 각 문제의 정답, 상세 해설, 서술형 모범 답안 및 채점 기준을 포함하세요)
             """
 
-            user_prompt = f"대상 학년: {grade}\n책 제목: {book_title}\n\n[문제지]와 [정답지]를 명확히 구분하여 객관식 3문제(5지선다)와 서술형 2문제를 출제해주세요."
+            user_prompt = f"대상 학년: {grade}\n책 제목: {book_title}\n작가 이름: {author_name if author_name else '입력 안 함'}\n\n[문제지]와 [정답지]를 명확히 구분하여 객관식 3문제(5지선다)와 서술형 2문제를 출제해주세요."
 
-            with st.spinner("전문가 페르소나가 책을 분석하고 고품질 문항을 출제하는 중입니다..."):
-                # Gemini 모델 설정 (시스템 지시어 적용)
+            with st.spinner("전문가 페르소나가 책과 작가 정보를 분석하고 고품질 문항을 출제하는 중입니다..."):
+                # 더욱 정교한 분석을 위해 제미나이 프로/플래시 모델 적용
                 model = genai.GenerativeModel(
-                    model_name="gemini-1.5-flash",
+                    model_name="gemini-1.5-pro",
                     system_instruction=system_prompt
                 )
                 
