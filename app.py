@@ -1,16 +1,16 @@
 import os
 import streamlit as st
-from openai import OpenAI
+import google.generativeai as genai
 
-# 1. 페이지 설정은 반드시 가장 맨 처음에 와야 합니다!
+# 1. 페이지 설정 (가장 먼저 위치해야 합니다)
 st.set_page_config(page_title="책의 온도 - 독서활동 평가문항 출제기", page_icon="📚", layout="centered")
 
 # 메인 타이틀 적용
 st.title("🔥 책의 온도 - 읽은 만큼 성장합니다.")
-st.caption("초·중등 독서교육 전문가 맞춤형 퀴즈 출제 프로그램")
+st.caption("초·중등 독서교육 전문가 맞춤형 퀴즈 출제 프로그램 (Google Gemini)")
 
-# API 키 입력받기 (비밀번호 형태로 숨김 처리)
-user_api_key = st.text_input("OpenAI API Key를 입력하세요 (sk-로 시작)", type="password")
+# Google API 키 입력받기 (비밀번호 형태로 숨김 처리)
+user_api_key = st.text_input("Google API Key를 입력하세요", type="password")
 
 # 사용자 입력 폼
 with st.form("expert_quiz_form"):
@@ -20,14 +20,13 @@ with st.form("expert_quiz_form"):
 
 if submit_button:
     if not user_api_key:
-        st.warning("OpenAI API Key를 입력해주세요!")
+        st.warning("Google API Key를 입력해주세요!")
     elif not book_title or not grade:
         st.warning("학년과 책 제목을 모두 입력해주세요!")
     else:
-        # 2. 입력받은 API 키로 OpenAI 클라이언트 초기화
-        client = OpenAI(api_key=user_api_key)
-        
-        with st.spinner("전문가 페르소나가 책을 분석하고 고품질 문항을 출제하는 중입니다..."):
+        try:
+            # 2. 구글 제미나이 API 설정
+            genai.configure(api_key=user_api_key)
             
             system_prompt = """
 당신은 20년 경력의 초·중등 국어 독서교육 전문가이자 교육부 권장도서 독서활동 평가문항 출제위원이다.
@@ -70,36 +69,34 @@ if submit_button:
 
             user_prompt = f"대상 학년: {grade}\n책 제목: {book_title}\n\n[문제지]와 [정답지]를 명확히 구분하여 객관식 3문제(5지선다)와 서술형 2문제를 출제해주세요."
 
-            try:
-                response = client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    temperature=0.7,
+            with st.spinner("전문가 페르소나가 책을 분석하고 고품질 문항을 출제하는 중입니다..."):
+                # Gemini 모델 설정 (시스템 지시어 적용)
+                model = genai.GenerativeModel(
+                    model_name="gemini-1.5-flash",
+                    system_instruction=system_prompt
                 )
-
-                full_result = response.choices[0].message.content
                 
-                # 결과물을 [문제지]와 [정답지] 기준으로 파싱(분리)
-                if "[문제지]" in full_result and "[정답지]" in full_result:
-                    parts = full_result.split("[정답지]")
-                    quiz_part = parts[0].replace("[문제지]", "").strip()
-                    answer_part = parts[1].strip()
-                else:
-                    quiz_part = full_result
-                    answer_part = "정답지를 분리하는 중 형식이 일부 일치하지 않았습니다. 전체 내용을 참고해주세요."
+                response = model.generate_content(user_prompt)
+                full_result = response.text
+            
+            # 결과물을 [문제지]와 [정답지] 기준으로 파싱(분리)
+            if "[문제지]" in full_result and "[정답지]" in full_result:
+                parts = full_result.split("[정답지]")
+                quiz_part = parts[0].replace("[문제지]", "").strip()
+                answer_part = parts[1].strip()
+            else:
+                quiz_part = full_result
+                answer_part = "정답지를 분리하는 중 형식이 일부 일치하지 않았습니다. 전체 내용을 참고해주세요."
 
-                # 세션 스테이트에 결과 저장
-                st.session_state["quiz_part"] = quiz_part
-                st.session_state["answer_part"] = answer_part
-                st.session_state["generated"] = True
+            # 세션 스테이트에 결과 저장
+            st.session_state["quiz_part"] = quiz_part
+            st.session_state["answer_part"] = answer_part
+            st.session_state["generated"] = True
 
-                st.success("전문가 출제위원이 퀴즈를 성공적으로 완성했습니다!")
+            st.success("전문가 출제위원이 퀴즈를 성공적으로 완성했습니다!")
 
-            except Exception as e:
-                st.error(f"오류가 발생했습니다: {e}")
+        except Exception as e:
+            st.error(f"오류가 발생했습니다: {e}")
 
 # 결과가 생성된 경우 버튼 인터페이스 제공
 if st.session_state.get("generated", False):
