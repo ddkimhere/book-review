@@ -2,31 +2,27 @@ import os
 import streamlit as st
 import google.generativeai as genai
 
-# 1. 페이지 설정 (가장 먼저 위치해야 합니다)
+# 1. 페이지 설정
 st.set_page_config(
     page_title="책의 온도 - 읽은 만큼 성장합니다.", page_icon="📚", layout="centered"
 )
 
-# 인쇄 최적화 CSS 및 자바스크립트 적용
+# 인쇄 시 불필요한 입력창, 버튼, 사이드바를 완전히 숨기고 시험지만 깔끔하게 출력하는 CSS
 st.markdown(
     """
-    <script>
-    function printPage() {
-        window.print();
-    }
-    </script>
     <style>
     @media print {
-        header, footer, .stButton, form, .stTextInput, .stAlert, .print-btn {
+        /* 인쇄 화면에서 숨길 요소들 */
+        header, footer, .stButton, form, .stTextInput, .stAlert, div[data-testid="stSidebar"] {
             display: none !important;
         }
         body {
-            background-color: white;
-            color: black;
-            font-size: 12pt;
+            background-color: white !important;
+            color: black !important;
+            font-size: 12pt !important;
         }
         .main {
-            padding: 0px;
+            padding: 0px !important;
         }
         hr {
             border-color: black !important;
@@ -102,8 +98,12 @@ if submit_button:
 - 반드시 결과물을 [문제지] 와 [정답지] 섹션으로 명확히 구분하여 출력할 것.
 - [문제지] 섹션의 맨 위에는 반드시 아래와 같은 학생 작성용 양식을 포함할 것:
   ---
-  **[독서 활동 평가지]**
+  **[독서 활동 평가지 - 문제지]**
   - **학년/반**: [     ]학년 [     ]반  |  **번호**: [     ]번  |  **이름**: [             ]
+  ---
+- [정답지] 섹션의 맨 위에는 반드시 아래와 같은 교사용 양식을 포함할 것:
+  ---
+  **[독서 활동 평가지 - 교사용 정답 및 해설]**
   ---
 """
 
@@ -111,7 +111,6 @@ if submit_button:
             user_prompt = f"대상 학년: {grade}\n책 제목: {book_title}\n작가 이름: {target_author}\n\n[문제지]와 [정답지]를 명확히 구분하여 출제해주세요."
 
             with st.spinner("전문가 페르소나가 완벽한 시험지 형태의 문항을 출제하는 중입니다..."):
-                # Gemini 3.5 Flash 모델로 고정
                 model = genai.GenerativeModel(
                     model_name="gemini-3.5-flash",
                     system_instruction=system_prompt
@@ -143,15 +142,13 @@ if submit_button:
 if st.session_state.get("generated", False):
     st.markdown("---")
     
-    # 버튼 영역 생성 (문제지 보기, 정답지 보기, 인쇄하기)
-    col1, col2, col3 = st.columns(3)
+    # 버튼 영역 생성 (문제지 보기, 정답지 보기)
+    col1, col2 = st.columns(2)
     
     with col1:
-        show_quiz = st.button("📝 문제지 보기", use_container_width=True)
+        show_quiz = st.button("📝 학생용 문제지 보기", use_container_width=True)
     with col2:
-        show_answer = st.button("🔑 정답지 보기", use_container_width=True)
-    with col3:
-        print_btn = st.button("🖨️ 화면 프린트하기", use_container_width=True)
+        show_answer = st.button("🔑 교사용 정답지 보기", use_container_width=True)
     
     # 기본값은 문제지가 보이게 설정
     if "view_mode" not in st.session_state:
@@ -161,10 +158,10 @@ if st.session_state.get("generated", False):
         st.session_state["view_mode"] = "quiz"
     if show_answer:
         st.session_state["view_mode"] = "answer"
-    
-    # 인쇄 버튼 클릭 시 자바스크립트 인쇄 창 호출
-    if print_btn:
-        st.components.v1.html("<script>window.print();</script>", height=0)
+
+    # 인쇄 안내 배너 추가
+    st.info("💡 **인쇄 안내**: 키보드 단축키 **`Ctrl + P`**(윈도우) 또는 **`Cmd + P`**(맥)를 누르시면 상단 메뉴와 버튼이 모두 사라지고 깔끔한 시험지만 종이에 인쇄됩니다!")
+    st.markdown("---")
 
     # 출력 화면 상단에 인쇄용 타이틀 적용
     st.markdown("<h2 style='text-align: center; color: #FF4B4B;'>📖 책의 온도 - 읽은 만큼 성장합니다.</h2>", unsafe_allow_html=True)
@@ -172,8 +169,6 @@ if st.session_state.get("generated", False):
 
     # 선택된 모드에 따라 화면 출력
     if st.session_state["view_mode"] == "quiz":
-        st.info("📌 현재 **[문제지]** 화면입니다. (학생들에게 배포할 시험지 형태)")
         st.markdown(st.session_state["quiz_part"])
     else:
-        st.warning("🔑 현재 **[정답지 및 해설]** 화면입니다. (교사용)")
         st.markdown(st.session_state["answer_part"])
