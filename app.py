@@ -9,7 +9,7 @@ st.set_page_config(page_title="책의 온도 - 읽은 만큼 성장합니다.", 
 st.markdown("""
     <style>
     @media print {
-        header, footer, .stButton, form, .stTextInput, .stAlert, div[data-testid="stSidebar"], .css-145kmo2 {
+        header, footer, .stButton, form, .stTextInput, .stAlert, div[data-testid="stSidebar"] {
             display: none !important;
         }
         body, .main, .block-container {
@@ -26,7 +26,7 @@ st.markdown("""
 st.title("🔥 책의 온도 - 읽은 만큼 성장합니다.")
 st.caption("초·중등 독서교육 전문가 맞춤형 퀴즈 출제 프로그램 (Gemini 3.5 Flash)")
 
-# API 키 및 입력
+# API 키 및 입력 폼
 user_api_key = st.text_input("Google API Key를 입력하세요", type="password")
 
 with st.form("quiz_form"):
@@ -44,7 +44,7 @@ if submit:
         try:
             genai.configure(api_key=user_api_key)
             
-            # 선생님께서 주신 오리지널 프롬프트
+            # 전문가 출제 프롬프트
             system_prompt = """
 # 역할
 당신은 20년 경력의 초·중등 국어 독서교육 전문가이자 교육부 권장도서 독서활동 평가문항 출제위원이다.
@@ -94,7 +94,7 @@ if submit:
             user_prompt = f"대상 학년: {grade}\n책 제목: {book_title}\n작가 이름: {target_author}\n\n[문제지]와 [정답지]를 명확히 구분하여 출제해주세요."
 
             with st.spinner("전문가 페르소나가 시험지를 제작 중입니다..."):
-                model = genai.GenerativeModel(model_name="gemini-3.5-flash", system_instruction=system_prompt)
+                model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=system_prompt)
                 response = model.generate_content(user_prompt)
                 full_result = response.text
             
@@ -102,6 +102,9 @@ if submit:
                 parts = full_result.split("[정답지]")
                 st.session_state["quiz_part"] = parts[0].replace("[문제지]", "").strip()
                 st.session_state["answer_part"] = parts[1].strip()
+            else:
+                st.session_state["quiz_part"] = full_result
+                st.session_state["answer_part"] = "정답지를 분리하는 과정에서 형식이 일치하지 않았습니다."
             
             st.session_state["generated"] = True
             st.success("완료되었습니다! 아래 탭을 눌러 확인 후 인쇄하세요.")
@@ -109,13 +112,15 @@ if submit:
         except Exception as e:
             st.error(f"오류가 발생했습니다: {e}")
 
-# 결과 출력
+# 결과가 생성된 경우에만 탭과 결과 출력 (KeyError 방지)
 if st.session_state.get("generated", False):
     st.markdown("---")
     tab1, tab2 = st.tabs(["📝 학생용 문제지", "🔑 교사용 정답지"])
+    
     with tab1:
-        st.markdown(st.session_state["quiz_part"])
+        st.markdown(st.session_state.get("quiz_part", "내용이 없습니다."))
     with tab2:
-        st.markdown(st.session_state["answer_part"])
+        st.markdown(st.session_state.get("answer_part", "내용이 없습니다."))
         
+    st.markdown("---")
     st.info("🖨️ **인쇄 방법:** 위 탭에서 인쇄할 내용을 선택하고 키보드의 **Ctrl + P**(맥: Cmd + P)를 누르세요.")
