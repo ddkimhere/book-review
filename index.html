@@ -28,6 +28,15 @@
             line-height: 1.8;
             color: #111;
         }
+        /* 문항 간 여백 및 가독성 최적화 */
+        .question-box {
+            margin-bottom: 35px;
+        }
+        .option-item {
+            display: block;
+            margin-top: 6px;
+            margin-left: 20px;
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-950 min-h-screen flex flex-col items-center p-4 sm:p-6">
@@ -134,11 +143,18 @@
                 .replace(/\[정답지\]/g, '')
                 .trim();
 
+            // 볼드체 강조
             cleaned = cleaned.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-slate-950">$1</strong>');
-            cleaned = cleaned.replace(/(\b[I|V|X]+\.\s+[^\n]+)/g, '<h3 class="text-lg font-bold mt-8 mb-4 text-orange-700 border-b-2 border-orange-500 pb-1">$1</h3>');
-            cleaned = cleaned.replace(/(\n\s*[1-5]\.\s+|\n\s*\[?[0-9]+번\]?)/g, '<br><br><div style="margin-top:20px; font-weight:bold; font-size:1.05rem;">$1</div>');
-            cleaned = cleaned.replace(/([①②③④⑤])/g, '<br><span style="display:block; margin-left:20px; margin-top:6px;">$1</span>');
-            cleaned = cleaned.replace(/(\b[1-5]\)\s)/g, '<br><span style="display:block; margin-left:20px; margin-top:6px;">$1</span>');
+
+            // 대단원 제목 처리
+            cleaned = cleaned.replace(/(\b[I|V|X]+\.\s+[^\n]+)/g, '<h3 class="text-lg font-bold mt-8 mb-6 text-orange-700 border-b-2 border-orange-500 pb-2">$1</h3>');
+
+            // 문항별 구분을 확실히 하고 빈 두 줄(여백) 확보
+            cleaned = cleaned.replace(/(\n\s*[1-5]\.\s+|\n\s*\[?[0-9]+번\]?)/g, '<br><br><div class="question-box"><strong style="font-size:1.05rem;">$1</strong>');
+            
+            // 문항이 끝날 때 닫는 태그 느낌을 주도록 처리 (중복 방지를 위해 가나다라마 변환과 연계)
+            // 객관식 보기 (가, 나, 다, 라, 마 또는 ①~⑤) 줄바꿈 및 개별 줄바꿈 적용
+            cleaned = cleaned.replace(/([가-마]\.\s*|[①②③④⑤]\s*|\b[1-5]\)\s*)/g, '<br><span class="option-item">$1</span>');
 
             return cleaned;
         }
@@ -158,6 +174,8 @@
                         .exam-title { font-size: 24px; font-weight: 900; text-align: center; margin-bottom: 10px; color: #c2410c; }
                         .exam-subtitle { font-size: 14px; text-align: center; color: #555; margin-bottom: 15px; }
                         .exam-info { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; background: #f9f9f9; padding: 12px 20px; border-radius: 8px; border: 1px solid #ddd; }
+                        .question-box { margin-bottom: 35px; }
+                        .option-item { display: block; margin-top: 6px; margin-left: 20px; }
                         strong { font-weight: bold; }
                         @media print { body { padding: 0; } }
                     </style>
@@ -197,6 +215,8 @@
                         body { font-family: 'Malgun Gothic', sans-serif; padding: 40px; line-height: 1.8; color: #111; max-width: 800px; margin: 0 auto; }
                         .exam-header { border-bottom: 3px solid #c2410c; padding-bottom: 15px; margin-bottom: 30px; font-size: 22px; font-weight: 900; color: #c2410c; text-align: center; }
                         .exam-subtitle { font-size: 14px; text-align: center; color: #555; margin-top: -20px; margin-bottom: 25px; }
+                        .question-box { margin-bottom: 35px; }
+                        .option-item { display: block; margin-top: 6px; margin-left: 20px; }
                         strong { font-weight: bold; }
                         @media print { body { padding: 0; } }
                     </style>
@@ -252,10 +272,15 @@
 - 초5~6: 주제, 교훈, 인물의 변화, 추론
 - 중학생: 주제, 인물의 가치관, 갈등, 추론, 비판적 사고
 
-# 문제 구성 (총 5문항)
+# 문제 구성 및 보기 형식 (매우 중요)
 1. 객관식 3문항
-   - 형식: 항상 5지선다형 (1번~5번)
-   - 각 보기는 반드시 줄바꿈하여 가독성 있게 작성할 것.
+   - 형식: 항상 5지선다형으로 출제하되, 선택지 번호를 아래와 같이 반드시 '가, 나, 다, 라, 마'로 표기할 것.
+     가. [첫 번째 보기 내용]
+     나. [두 번째 보기 내용]
+     다. [세 번째 보기 내용]
+     라. [네 번째 보기 내용]
+     마. [다섯 번째 보기 내용]
+   - 각 선택지는 반드시 줄바꿈(개행)하여 가독성 있게 작성할 것.
 2. 서술형 2문항
    - 학생용 발문과 함께 교사/학부모를 위한 '모범 답안' 및 '채점 기준'을 함께 제공할 것.
 
