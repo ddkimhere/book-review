@@ -7,12 +7,17 @@ st.set_page_config(
     page_title="책의 온도 - 읽은 만큼 성장합니다.", page_icon="📚", layout="centered"
 )
 
-# 인쇄(Print) 시 불필요한 UI 숨기기 CSS 적용
+# 자바스크립트 인쇄 기능 및 인쇄 시 불필요한 UI 숨기기 CSS 적용
 st.markdown(
     """
+    <script>
+    function printPage() {
+        window.print();
+    }
+    </script>
     <style>
     @media print {
-        header, footer, .stButton, form, .stTextInput, .stAlert {
+        header, footer, .stButton, form, .stTextInput, .stAlert, .print-btn {
             display: none !important;
         }
         body {
@@ -30,7 +35,7 @@ st.markdown(
 
 # 메인 타이틀 적용
 st.title("🔥 책의 온도 - 읽은 만큼 성장합니다.")
-st.caption("초·중등 독서교육 전문가 맞춤형 퀴즈 출제 프로그램 (Gemini)")
+st.caption("초·중등 독서교육 전문가 맞춤형 퀴즈 출제 프로그램 (Gemini 3.5 Flash)")
 
 # Google API 키 입력받기 (비밀번호 형태로 숨김 처리)
 user_api_key = st.text_input("Google API Key를 입력하세요", type="password")
@@ -91,11 +96,11 @@ if submit_button:
 2. 정답지 섹션 시작할 때: [정답지] 라고 적어주세요. (여기에는 각 문제의 정답, 상세 해설, 서술형 모범 답안 및 채점 기준을 포함하세요)
             """
 
-            # 문자열이 잘리지 않도록 안전하게 처리한 변수 설정
             target_author = author_name if author_name else "입력 안 함"
             user_prompt = f"대상 학년: {grade}\n책 제목: {book_title}\n작가 이름: {target_author}\n\n[문제지]와 [정답지]를 명확히 구분하여 객관식 3문제(5지선다)와 서술형 2문제를 출제해주세요."
 
             with st.spinner("전문가 페르소나가 책과 작가 정보를 분석하고 고품질 문항을 출제하는 중입니다..."):
+                # Gemini 3.5 Flash 모델로 엄격히 고정
                 model = genai.GenerativeModel(
                     model_name="gemini-3.5-flash",
                     system_instruction=system_prompt
@@ -127,13 +132,15 @@ if submit_button:
 if st.session_state.get("generated", False):
     st.markdown("---")
     
-    # 버튼 영역 생성
-    col1, col2 = st.columns(2)
+    # 버튼 영역 생성 (문제지 보기, 정답지 보기, 인쇄하기)
+    col1, col2, col3 = st.columns(3)
     
     with col1:
         show_quiz = st.button("📝 문제지 보기", use_container_width=True)
     with col2:
         show_answer = st.button("🔑 정답지 보기", use_container_width=True)
+    with col3:
+        print_btn = st.button("🖨️ 화면 프린트하기", use_container_width=True)
     
     # 기본값은 문제지가 보이게 설정
     if "view_mode" not in st.session_state:
@@ -143,6 +150,10 @@ if st.session_state.get("generated", False):
         st.session_state["view_mode"] = "quiz"
     if show_answer:
         st.session_state["view_mode"] = "answer"
+    
+    # 인쇄 버튼 클릭 시 자바스크립트 인쇄 창 호출
+    if print_btn:
+        st.components.v1.html("<script>window.print();</script>", height=0)
 
     # 출력 화면 상단에 인쇄용 타이틀 적용
     st.markdown("<h2 style='text-align: center; color: #FF4B4B;'>📖 책의 온도 - 읽은 만큼 성장합니다.</h2>", unsafe_allow_html=True)
@@ -150,8 +161,8 @@ if st.session_state.get("generated", False):
 
     # 선택된 모드에 따라 화면 출력
     if st.session_state["view_mode"] == "quiz":
-        st.info("📌 현재 **[문제지]** 화면입니다. (학생들에게 배포용 / 인쇄 시 Ctrl+P)")
+        st.info("📌 현재 **[문제지]** 화면입니다. (학생 배포용)")
         st.markdown(st.session_state["quiz_part"])
     else:
-        st.warning("🔑 현재 **[정답지 및 해설]** 화면입니다. (교사용 / 인쇄 시 Ctrl+P)")
+        st.warning("🔑 현재 **[정답지 및 해설]** 화면입니다. (교사용)")
         st.markdown(st.session_state["answer_part"])
