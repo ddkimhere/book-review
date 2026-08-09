@@ -3,7 +3,7 @@ import streamlit as st
 from openai import OpenAI
 
 # OpenAI 클라이언트 초기화 (제공해주신 API 키 적용)
-client = OpenAI(api_key="AQ.Ab8RN6Jv5EWnhuJXci4xOPcGBhUhuLdMKuu90p9Z7mClO926oQ")
+user_api_key = st.text_input("OpenAI API Key를 입력하세요 (sk-로 시작)", type="password")
 
 st.set_page_config(page_title="책의 온도 - 독서활동 평가문항 출제기", page_icon="📚", layout="centered")
 
