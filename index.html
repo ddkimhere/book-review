@@ -24,12 +24,19 @@
                 padding: 0 !important;
             }
         }
+        /* 보기 항목 줄바꿈 스타일 */
+        .option-item {
+            display: block;
+            margin-top: 4px;
+            margin-bottom: 4px;
+            padding-left: 10px;
+        }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-900 min-h-screen flex flex-col items-center p-4 sm:p-6">
 
     <div class="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-6 sm:p-10 my-4">
-        <!-- Header (Gemini 버전 문구 제거 완료) -->
+        <!-- Header -->
         <div class="text-center mb-8 no-print">
             <h1 class="text-2xl sm:text-4xl font-black text-orange-600 mb-2">🔥 책의 온도</h1>
             <p class="text-sm font-medium text-slate-500">초·중등 독서교육 전문가 맞춤형 독서 평가 프로그램</p>
@@ -71,8 +78,8 @@
             </div>
 
             <!-- Tab Contents -->
-            <div id="tab-quiz" class="print-area bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm leading-relaxed text-slate-800"></div>
-            <div id="tab-answer" class="print-area bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm leading-relaxed text-slate-800 hidden"></div>
+            <div id="tab-quiz" class="print-area bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm leading-relaxed text-slate-800 whitespace-pre-wrap"></div>
+            <div id="tab-answer" class="print-area bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm leading-relaxed text-slate-800 whitespace-pre-wrap hidden"></div>
 
             <!-- Print Buttons -->
             <div class="mt-8 p-5 bg-orange-50 border border-orange-200 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 no-print">
@@ -120,7 +127,6 @@
 
         function formatMarkdown(text) {
             if (!text) return "";
-            // 불필요한 메타마크다운 기호 제거 후 깔끔한 HTML 태그로 변환
             let cleaned = text
                 .replace(/---/g, '')
                 .replace(/\[독서 활동 평가지\]/g, '')
@@ -129,12 +135,17 @@
                 .replace(/>/g, "&gt;");
 
             return cleaned
+                // 굵은 글씨 처리
                 .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-slate-900">$1</strong>')
+                // 소제목(###) 처리
                 .replace(/### (.*?)\n/g, '<h3 class="text-base font-bold mt-6 mb-3 text-orange-700 bg-orange-50 p-2 rounded-lg border-l-4 border-orange-600">$1</h3>')
-                .replace(/## (.*?)\n/g, '<h2 class="text-lg font-black mt-8 mb-4 text-slate-900 border-b pb-2">$1</h2>');
+                // 대제목(##) 처리
+                .replace(/## (.*?)\n/g, '<h2 class="text-lg font-black mt-8 mb-4 text-slate-900 border-b pb-2">$1</h2>')
+                // 객관식 보기(①, ②, ③, ④, ⑤ 또는 1., 2. 등) 줄바꿈 처리
+                .replace(/([①②③④⑤])/g, '<span class="option-item">$1</span>')
+                .replace(/(\b[1-5]\)\s)/g, '<span class="option-item">$1</span>');
         }
 
-        // 학생용 시험지 인쇄 창 생성
         function printOnlyQuiz() {
             const quizContent = document.getElementById('tab-quiz').innerHTML;
             const printWindow = window.open('', '_blank');
@@ -145,11 +156,11 @@
                     <meta charset="UTF-8">
                     <title>[책의 온도] 학생용 문제지 - ${currentBookTitle}</title>
                     <style>
-                        body { font-family: 'Malgun Gothic', sans-serif; padding: 40px; line-height: 1.7; color: #111; max-width: 800px; margin: 0 auto; }
+                        body { font-family: 'Malgun Gothic', sans-serif; padding: 40px; line-height: 1.7; color: #111; max-width: 800px; margin: 0 auto; white-space: pre-wrap; }
                         .exam-header { border-bottom: 3px solid #111; padding-bottom: 20px; margin-bottom: 30px; }
                         .exam-title { font-size: 24px; font-weight: 900; text-align: center; margin-bottom: 15px; color: #c2410c; }
                         .exam-info { display: flex; justify-content: space-between; font-size: 14px; font-weight: bold; background: #f9f9f9; padding: 12px 20px; border-radius: 8px; border: 1px solid #ddd; }
-                        .question-block { margin-bottom: 25px; }
+                        .option-item { display: block; margin-top: 4px; margin-bottom: 4px; padding-left: 10px; }
                         strong { font-weight: bold; }
                         @media print { body { padding: 0; } }
                     </style>
@@ -159,7 +170,7 @@
                         <div class="exam-title">🔥 책의 온도 독서 평가지 (${currentBookTitle})</div>
                         <div class="exam-info">
                             <div>학년: ${currentGrade}</div>
-                            <div>날짜: 2026년 _____월 _____일</div>
+                            <div>날짜: ____________________</div>
                             <div>이름: ____________________</div>
                         </div>
                     </div>
@@ -175,7 +186,6 @@
             printWindow.document.close();
         }
 
-        // 교사용 정답지 인쇄 창 생성
         function printOnlyAnswer() {
             const answerContent = document.getElementById('tab-answer').innerHTML;
             const printWindow = window.open('', '_blank');
@@ -186,8 +196,9 @@
                     <meta charset="UTF-8">
                     <title>[책의 온도] 교사용 정답지 - ${currentBookTitle}</title>
                     <style>
-                        body { font-family: 'Malgun Gothic', sans-serif; padding: 40px; line-height: 1.7; color: #111; max-width: 800px; margin: 0 auto; }
+                        body { font-family: 'Malgun Gothic', sans-serif; padding: 40px; line-height: 1.7; color: #111; max-width: 800px; margin: 0 auto; white-space: pre-wrap; }
                         .exam-header { border-bottom: 3px solid #c2410c; padding-bottom: 15px; margin-bottom: 30px; font-size: 22px; font-weight: 900; color: #c2410c; text-align: center; }
+                        .option-item { display: block; margin-top: 4px; margin-bottom: 4px; padding-left: 10px; }
                         strong { font-weight: bold; }
                         @media print { body { padding: 0; } }
                     </style>
