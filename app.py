@@ -2,14 +2,15 @@ import os
 import streamlit as st
 from openai import OpenAI
 
-# OpenAI 클라이언트 초기화 (제공해주신 API 키 적용)
-user_api_key = st.text_input("OpenAI API Key를 입력하세요 (sk-로 시작)", type="password")
-
+# 1. 페이지 설정은 반드시 가장 맨 처음에 와야 합니다!
 st.set_page_config(page_title="책의 온도 - 독서활동 평가문항 출제기", page_icon="📚", layout="centered")
 
 # 메인 타이틀 적용
 st.title("🔥 책의 온도 - 읽은 만큼 성장합니다.")
 st.caption("초·중등 독서교육 전문가 맞춤형 퀴즈 출제 프로그램")
+
+# API 키 입력받기 (비밀번호 형태로 숨김 처리)
+user_api_key = st.text_input("OpenAI API Key를 입력하세요 (sk-로 시작)", type="password")
 
 # 사용자 입력 폼
 with st.form("expert_quiz_form"):
@@ -18,9 +19,14 @@ with st.form("expert_quiz_form"):
     submit_button = st.form_submit_button(label="전문가 퀴즈 생성하기")
 
 if submit_button:
-    if not book_title or not grade:
+    if not user_api_key:
+        st.warning("OpenAI API Key를 입력해주세요!")
+    elif not book_title or not grade:
         st.warning("학년과 책 제목을 모두 입력해주세요!")
     else:
+        # 2. 입력받은 API 키로 OpenAI 클라이언트 초기화
+        client = OpenAI(api_key=user_api_key)
+        
         with st.spinner("전문가 페르소나가 책을 분석하고 고품질 문항을 출제하는 중입니다..."):
             
             system_prompt = """
