@@ -73,7 +73,7 @@ if submit_button:
             with st.spinner("전문가 페르소나가 책과 작가 정보를 분석하고 고품질 문항을 출제하는 중입니다..."):
                 # 더욱 정교한 분석을 위해 제미나이 프로/플래시 모델 적용
                 model = genai.GenerativeModel(
-                    model_name="gemini-1.5-pro",
+                    model_name="gemini-3.5-pro",
                     system_instruction=system_prompt
                 )
                 
