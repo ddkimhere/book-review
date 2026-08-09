@@ -21,7 +21,7 @@
     <div class="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-6 sm:p-10 my-4">
         <div class="text-center mb-8 no-print">
             <h1 class="text-2xl sm:text-4xl font-black text-orange-600 mb-2">🔥 책의 온도</h1>
-            <p class="text-sm font-medium text-slate-500">초·중등 독서교육 전문가 맞춤형 독서 평가 프로그램 (Gemini 3.5 Flash)</p>
+            <p class="text-sm font-medium text-slate-500">초·중등 독서교육 전문가 맞춤형 독서 평가 프로그램</p>
         </div>
 
         <div id="form-section" class="space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-200 no-print mb-8">
@@ -32,11 +32,11 @@
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">책 제목</label>
-                    <input type="text" id="bookTitle" placeholder="예: 소년이 온다" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl bg-white text-sm">
+                    <input type="text" id="bookTitle" placeholder="예: 동물농장" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl bg-white text-sm">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-slate-600 mb-1">작가 이름</label>
-                    <input type="text" id="authorName" placeholder="예: 한강" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl bg-white text-sm">
+                    <input type="text" id="authorName" placeholder="예: 조지 오웰" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl bg-white text-sm">
                 </div>
             </div>
             <button onclick="generateQuiz()" id="submitBtn" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3.5 rounded-xl transition shadow-md cursor-pointer">✨ 전문가 시험지 자동 출제하기</button>
@@ -49,8 +49,8 @@
 
         <div id="result-section" class="hidden">
             <div class="flex border-b border-slate-200 mb-6 no-print">
-                <button onclick="switchTab('quiz')" id="tab-quiz-btn" class="flex-1 py-3 font-bold text-orange-600 border-b-2 border-orange-600">📝 학생용 문제지</button>
-                <button onclick="switchTab('answer')" id="tab-answer-btn" class="flex-1 py-3 font-bold text-slate-400 border-b-2 border-transparent">🔑 교사용 정답지</button>
+                <button onclick="switchTab('quiz')" id="tab-quiz-btn" class="flex-1 py-3 font-bold text-orange-600 border-b-2 border-orange-600 cursor-pointer">📝 학생용 문제지</button>
+                <button onclick="switchTab('answer')" id="tab-answer-btn" class="flex-1 py-3 font-bold text-slate-400 border-b-2 border-transparent cursor-pointer">🔑 교사용 정답지</button>
             </div>
             <div id="tab-quiz" class="print-area exam-layout bg-white p-6 rounded-2xl border shadow-sm"></div>
             <div id="tab-answer" class="print-area exam-layout bg-white p-6 rounded-2xl border shadow-sm hidden"></div>
@@ -58,8 +58,8 @@
             <div class="mt-8 p-5 bg-orange-50 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 no-print">
                 <p class="text-sm font-medium text-orange-900">🖨️ 하단 버튼을 눌러 인쇄하세요.</p>
                 <div class="flex gap-3">
-                    <button onclick="printOnlyQuiz()" class="bg-slate-800 text-white px-5 py-2 rounded-xl text-xs font-bold">📄 학생용 인쇄</button>
-                    <button onclick="printOnlyAnswer()" class="bg-orange-600 text-white px-5 py-2 rounded-xl text-xs font-bold">🔑 교사용 인쇄</button>
+                    <button onclick="printOnlyQuiz()" class="bg-slate-800 text-white px-5 py-2 rounded-xl text-xs font-bold cursor-pointer">📄 학생용 인쇄</button>
+                    <button onclick="printOnlyAnswer()" class="bg-orange-600 text-white px-5 py-2 rounded-xl text-xs font-bold cursor-pointer">🔑 교사용 인쇄</button>
                 </div>
             </div>
         </div>
@@ -70,8 +70,22 @@
         let quizText = "", answerText = "", currentBookTitle = "", currentGrade = "", currentAuthor = "";
 
         function switchTab(type) {
-            document.getElementById('tab-quiz').classList.toggle('hidden', type !== 'quiz');
-            document.getElementById('tab-answer').classList.toggle('hidden', type !== 'answer');
+            const quizBtn = document.getElementById('tab-quiz-btn');
+            const answerBtn = document.getElementById('tab-answer-btn');
+            const quizDiv = document.getElementById('tab-quiz');
+            const answerDiv = document.getElementById('tab-answer');
+
+            if (type === 'quiz') {
+                quizBtn.className = "flex-1 py-3 font-bold text-orange-600 border-b-2 border-orange-600 cursor-pointer";
+                answerBtn.className = "flex-1 py-3 font-bold text-slate-400 border-b-2 border-transparent cursor-pointer";
+                quizDiv.classList.remove('hidden');
+                answerDiv.classList.add('hidden');
+            } else {
+                answerBtn.className = "flex-1 py-3 font-bold text-orange-600 border-b-2 border-orange-600 cursor-pointer";
+                quizBtn.className = "flex-1 py-3 font-bold text-slate-400 border-b-2 border-transparent cursor-pointer";
+                answerDiv.classList.remove('hidden');
+                quizDiv.classList.add('hidden');
+            }
         }
 
         function formatExamText(text) {
@@ -90,9 +104,19 @@
         }
 
         async function generateQuiz() {
-            const grade = document.getElementById('grade').value, bookTitle = document.getElementById('bookTitle').value, authorName = document.getElementById('authorName').value;
-            if (!bookTitle || !grade) return alert("학년과 책 제목을 입력해주세요.");
-            currentBookTitle = bookTitle; currentGrade = grade; currentAuthor = authorName;
+            const grade = document.getElementById('grade').value.trim();
+            const bookTitle = document.getElementById('bookTitle').value.trim();
+            const authorName = document.getElementById('authorName').value.trim();
+
+            if (!bookTitle || !grade) {
+                alert("학년과 책 제목을 모두 입력해주세요.");
+                return;
+            }
+
+            currentBookTitle = bookTitle; 
+            currentGrade = grade; 
+            currentAuthor = authorName;
+
             document.getElementById('loading').classList.remove('hidden');
             document.getElementById('result-section').classList.add('hidden');
 
@@ -143,13 +167,15 @@
             const userPrompt = `학년: ${grade}\n책 제목: ${bookTitle}\n작가 이름: ${authorName || "정보 없음"}\n\n[문제지]와 [정답지]를 명확히 구분하여 출제해주세요.`;
 
             try {
-                // gemini-3.5-flash 모델로 고정
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${FIXED_API_KEY}`, {
-                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${FIXED_API_KEY}`, {
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({contents: [{role: "user", parts: [{text: systemPrompt + "\n\n" + userPrompt}]}]})
                 });
+                
                 const data = await res.json();
                 if (data.error) throw new Error(data.error.message);
+                
                 const text = data.candidates[0].content.parts[0].text;
 
                 if (text.includes("[문제지]") && text.includes("[정답지]")) {
