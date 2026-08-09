@@ -2,45 +2,750 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>책의 온도 - 독서 평가 생성기</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>책의 온도 - 읽은 만큼 성장합니다.</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        @media print { .no-print { display: none !important; } .exam-page { page-break-after: always; } }
-        .exam-page { font-family: 'Malgun Gothic', sans-serif; line-height: 1.8; color: #111; max-width: 800px; margin: 0 auto; padding: 40px; }
-        .exam-header { border-bottom: 3px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
-        .exam-title { font-size: 24px; font-weight: 900; color: #c2410c; text-align: center; margin-bottom: 15px; }
-        .exam-info { display: flex; justify-content: space-between; font-weight: bold; background: #f9f9f9; padding: 12px; border: 1px solid #ddd; }
-        .question-block { margin-top: 30px; margin-bottom: 30px; }
-        .option-item { display: block; margin: 8px 0 8px 25px; }
-        .answer-box { margin-top: 15px; border: 1px solid #999; padding: 15px; min-height: 100px; background: #fdfdfd; }
+        :root {
+            --ink: #111827;
+            --muted: #6b7280;
+            --line: #d1d5db;
+            --soft: #f8fafc;
+            --brand: #c2410c;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: "Malgun Gothic", "Apple SD Gothic Neo", Arial, sans-serif;
+            background: #eef1f5;
+            color: var(--ink);
+        }
+
+        .app-shell {
+            width: min(1080px, calc(100% - 32px));
+            margin: 28px auto 60px;
+        }
+
+        .app-card {
+            background: #fff;
+            border-radius: 22px;
+            box-shadow: 0 18px 50px rgba(15, 23, 42, .10);
+            overflow: hidden;
+        }
+
+        .app-top {
+            padding: 30px 32px 18px;
+            text-align: center;
+        }
+
+        .app-top h1 {
+            margin: 0 0 8px;
+            font-size: clamp(28px, 4vw, 42px);
+            font-weight: 900;
+            color: #ea580c;
+            letter-spacing: -.04em;
+        }
+
+        .app-top p {
+            margin: 0;
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .form-wrap {
+            margin: 0 28px 28px;
+            padding: 22px;
+            border-radius: 18px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px;
+        }
+
+        .form-field label {
+            display: block;
+            margin-bottom: 7px;
+            font-size: 12px;
+            font-weight: 800;
+            color: #475569;
+        }
+
+        .form-field input {
+            width: 100%;
+            height: 44px;
+            padding: 0 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            background: #fff;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-field input:focus {
+            border-color: #f97316;
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, .12);
+        }
+
+        .generate-btn {
+            width: 100%;
+            margin-top: 15px;
+            height: 48px;
+            border: 0;
+            border-radius: 12px;
+            background: #ea580c;
+            color: #fff;
+            font-weight: 900;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .generate-btn:hover { background: #c2410c; }
+        .generate-btn:disabled { opacity: .55; cursor: not-allowed; }
+
+        #loading {
+            display: none;
+            padding: 64px 20px 72px;
+            text-align: center;
+        }
+
+        #loading.active { display: block; }
+
+        .spinner {
+            width: 44px;
+            height: 44px;
+            border: 4px solid #fed7aa;
+            border-top-color: #ea580c;
+            border-radius: 50%;
+            margin: 0 auto 16px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #e2e8f0;
+            margin: 0 28px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 15px 10px;
+            border: 0;
+            border-bottom: 3px solid transparent;
+            background: transparent;
+            color: #94a3b8;
+            font-size: 14px;
+            font-weight: 900;
+            cursor: pointer;
+        }
+
+        .tab-btn.active {
+            color: #c2410c;
+            border-bottom-color: #ea580c;
+        }
+
+        #result-section { display: none; }
+        #result-section.active { display: block; }
+
+        .preview-zone {
+            padding: 26px 18px 12px;
+            background: #e9edf2;
+        }
+
+        .exam-paper {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 15mm 15mm 16mm;
+            background: #fff;
+            color: #111;
+            box-shadow: 0 6px 26px rgba(15, 23, 42, .14);
+        }
+
+        .exam-paper.hidden { display: none; }
+
+        .paper-brand {
+            font-size: 9px;
+            font-weight: 800;
+            color: #6b7280;
+            letter-spacing: .14em;
+            margin-bottom: 5px;
+        }
+
+        .paper-title {
+            text-align: center;
+            font-size: 25px;
+            line-height: 1.25;
+            font-weight: 900;
+            letter-spacing: -.04em;
+            margin: 0;
+        }
+
+        .paper-book {
+            text-align: center;
+            font-size: 12px;
+            color: #4b5563;
+            margin-top: 7px;
+        }
+
+        .paper-rule {
+            height: 3px;
+            background: #111;
+            margin: 13px 0 11px;
+        }
+
+        .student-info {
+            display: grid;
+            grid-template-columns: 72px 1fr 72px 1fr;
+            border-top: 1px solid #9ca3af;
+            border-left: 1px solid #9ca3af;
+            margin-bottom: 18px;
+            font-size: 11px;
+        }
+
+        .student-info > div {
+            min-height: 34px;
+            display: flex;
+            align-items: center;
+            padding: 6px 8px;
+            border-right: 1px solid #9ca3af;
+            border-bottom: 1px solid #9ca3af;
+        }
+
+        .student-info .label {
+            justify-content: center;
+            background: #f3f4f6;
+            font-weight: 800;
+        }
+
+        .exam-section-title {
+            margin: 19px 0 11px;
+            padding: 8px 10px;
+            border-top: 2px solid #111;
+            border-bottom: 1px solid #9ca3af;
+            background: #f7f7f7;
+            font-size: 12px;
+            font-weight: 900;
+        }
+
+        .exam-guide {
+            margin: -2px 0 13px;
+            font-size: 10px;
+            color: #555;
+        }
+
+        .question-block {
+            break-inside: avoid;
+            page-break-inside: avoid;
+            margin: 0 0 18px;
+        }
+
+        .question-line {
+            display: grid;
+            grid-template-columns: 25px 1fr;
+            gap: 4px;
+            align-items: start;
+            font-size: 11.2pt;
+            line-height: 1.62;
+            font-weight: 700;
+        }
+
+        .qnum { font-weight: 900; }
+
+        .choice-list {
+            margin: 8px 0 0 29px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 5px;
+        }
+
+        .choice-item {
+            display: grid;
+            grid-template-columns: 22px 1fr;
+            gap: 4px;
+            font-size: 10.2pt;
+            line-height: 1.48;
+            font-weight: 400;
+        }
+
+        .choice-symbol { font-weight: 700; }
+
+        .essay-question {
+            margin-bottom: 14px;
+        }
+
+        .answer-lines {
+            margin: 8px 0 22px 29px;
+        }
+
+        .answer-line {
+            height: 28px;
+            border-bottom: 1px solid #c9c9c9;
+        }
+
+        .answer-card {
+            break-inside: avoid;
+            page-break-inside: avoid;
+            border: 1px solid #c7c7c7;
+            margin-bottom: 15px;
+        }
+
+        .answer-card-head {
+            background: #f3f4f6;
+            border-bottom: 1px solid #c7c7c7;
+            padding: 8px 10px;
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .answer-card-body {
+            padding: 10px 12px;
+            font-size: 10.2pt;
+            line-height: 1.55;
+        }
+
+        .answer-card-body p { margin: 5px 0; }
+
+        .raw-fallback {
+            white-space: pre-wrap;
+            font-size: 10.5pt;
+            line-height: 1.65;
+        }
+
+        .print-actions {
+            margin: 0 28px 28px;
+            padding: 16px;
+            border: 1px solid #fed7aa;
+            border-radius: 14px;
+            background: #fff7ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .print-note {
+            font-size: 12px;
+            color: #7c2d12;
+            font-weight: 700;
+        }
+
+        .print-btns { display: flex; gap: 8px; }
+
+        .print-btn {
+            border: 0;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 12px;
+            font-weight: 900;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .print-btn.student { background: #111827; }
+        .print-btn.teacher { background: #c2410c; }
+
+        @media (max-width: 900px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .preview-zone { overflow-x: auto; }
+            .exam-paper { transform-origin: top left; }
+            .print-actions { flex-direction: column; align-items: stretch; }
+            .print-btns { width: 100%; }
+            .print-btn { flex: 1; }
+        }
+
+        @media print {
+            body { background: #fff !important; }
+            .no-print, .app-top, .form-wrap, .tabs, .print-actions { display: none !important; }
+            .app-shell, .app-card, .preview-zone {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                background: #fff !important;
+                border-radius: 0 !important;
+            }
+            .exam-paper {
+                width: 100% !important;
+                min-height: 0 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+            }
+        }
+
+
+        .student-info-simple {
+            grid-template-columns: 18mm 1fr 18mm 1fr !important;
+        }
+
+        .teacher-info {
+            grid-template-columns: 18mm 1fr !important;
+        }
+
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
     </style>
 </head>
-<body class="bg-gray-100 p-4">
-    <div id="ui" class="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-lg no-print">
-        <h1 class="text-xl font-bold mb-4">시험지 생성 도구</h1>
-        <div class="grid grid-cols-3 gap-3 mb-4">
-            <input id="grade" placeholder="학년" class="border p-2 rounded">
-            <input id="bookTitle" placeholder="책 제목" class="border p-2 rounded">
-            <input id="authorName" placeholder="작가" class="border p-2 rounded">
-        </div>
-        <button onclick="generate()" class="w-full bg-black text-white py-3 rounded font-bold">시험지 만들기</button>
-    </div>
+<body>
+    <div class="app-shell">
+        <div class="app-card">
+            <div class="app-top no-print">
+                <h1>📚 책의 온도</h1>
+                <p>초·중등 독서교육 전문가 맞춤형 독서 평가 프로그램</p>
+            </div>
 
-    <div id="output" class="hidden">
-        <div id="quiz-page" class="exam-page bg-white shadow-lg my-6"></div>
-        <div id="answer-page" class="exam-page bg-white shadow-lg my-6"></div>
-        <div class="fixed bottom-5 right-5 no-print"><button onclick="window.print()" class="bg-orange-600 text-white px-6 py-3 rounded-full font-bold shadow-xl">전체 인쇄하기</button></div>
+            <div class="form-wrap no-print">
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label for="grade">학년</label>
+                        <input type="text" id="grade" value="중학교 2학년">
+                    </div>
+                    <div class="form-field">
+                        <label for="bookTitle">책 제목</label>
+                        <input type="text" id="bookTitle" placeholder="예: 소년이 온다">
+                    </div>
+                    <div class="form-field">
+                        <label for="authorName">작가 이름</label>
+                        <input type="text" id="authorName" placeholder="예: 한강">
+                    </div>
+                </div>
+                <button class="generate-btn" id="submitBtn" onclick="generateQuiz()">✨ 전문가 시험지 자동 출제하기</button>
+            </div>
+
+            <div id="loading">
+                <div class="spinner"></div>
+                <div style="font-weight:900; font-size:17px; color:#475569;">독서 교육 전문가가 문항을 출제 중입니다...</div>
+            </div>
+
+            <div id="result-section">
+                <div class="tabs no-print">
+                    <button id="tab-quiz-btn" class="tab-btn active" onclick="switchTab('quiz')">📝 학생용 문제지</button>
+                    <button id="tab-answer-btn" class="tab-btn" onclick="switchTab('answer')">🔑 교사용 정답 및 해설지</button>
+                </div>
+
+                <div class="preview-zone">
+                    <div id="tab-quiz" class="exam-paper"></div>
+                    <div id="tab-answer" class="exam-paper hidden"></div>
+                </div>
+
+                <div class="print-actions no-print">
+                    <div class="print-note">A4 기준으로 학생용 문제지와 교사용 정답지를 각각 인쇄할 수 있습니다.</div>
+                    <div class="print-btns">
+                        <button class="print-btn student" onclick="printOnlyQuiz()">📄 학생용 인쇄</button>
+                        <button class="print-btn teacher" onclick="printOnlyAnswer()">🔑 정답지 인쇄</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
-        const API_KEY = "AQ.Ab8RN6IIifBfy5NyxOxhyXXCFk2pi9fY7nqljNu03sB2pqVVHg";
-        
-        async function generate() {
-            const data = { grade: document.getElementById('grade').value, book: document.getElementById('bookTitle').value, author: document.getElementById('authorName').value };
-            document.getElementById('ui').innerHTML = "<p class='text-center font-bold'>전문가 페르소나가 문항을 출제 중입니다...</p>";
-            
-            // 완벽하게 포함된 프롬프트
-            const prompt = `
+        let quizText = "";
+        let answerText = "";
+        let currentBookTitle = "";
+        let currentGrade = "";
+        let currentAuthor = "";
+
+        const FIXED_API_KEY = "AQ.Ab8RN6IIifBfy5NyxOxhyXXCFk2pi9fY7nqljNu03sB2pqVVHg";
+
+        const choiceSymbols = ["①", "②", "③", "④", "⑤"];
+
+        function escapeHtml(value = "") {
+            return value
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function inlineMarkdown(value = "") {
+            return escapeHtml(value)
+                .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                .replace(/\*(.*?)\*/g, "<em>$1</em>");
+        }
+
+        function switchTab(type) {
+            const quizBtn = document.getElementById('tab-quiz-btn');
+            const answerBtn = document.getElementById('tab-answer-btn');
+            const quizDiv = document.getElementById('tab-quiz');
+            const answerDiv = document.getElementById('tab-answer');
+
+            const isQuiz = type === 'quiz';
+            quizBtn.classList.toggle('active', isQuiz);
+            answerBtn.classList.toggle('active', !isQuiz);
+            quizDiv.classList.toggle('hidden', !isQuiz);
+            answerDiv.classList.toggle('hidden', isQuiz);
+        }
+
+        function normalizeModelText(text) {
+            return (text || "")
+                .replace(/\r/g, "")
+                .replace(/^```(?:markdown|text)?\s*/i, "")
+                .replace(/```\s*$/i, "")
+                .replace(/---+/g, "")
+                .replace(/^#?\s*\[문제지\]\s*$/gmi, "")
+                .replace(/^#?\s*\[정답지\]\s*$/gmi, "")
+                .trim();
+        }
+
+        function parseQuestions(text) {
+            const clean = normalizeModelText(text);
+            const starts = [...clean.matchAll(/(?:^|\n)\s*([1-5])\.\s*/g)];
+            if (!starts.length) return [];
+
+            const items = [];
+            starts.forEach((match, index) => {
+                const number = Number(match[1]);
+                const start = match.index + match[0].length;
+                const end = index + 1 < starts.length ? starts[index + 1].index : clean.length;
+                const body = clean.slice(start, end).trim();
+                items.push({ number, body });
+            });
+            return items;
+        }
+
+        function splitChoices(body) {
+            const firstChoice = body.search(/[①②③④⑤]/);
+            if (firstChoice === -1) {
+                return { stem: body.trim(), choices: [] };
+            }
+
+            const stem = body.slice(0, firstChoice).trim();
+            const choiceText = body.slice(firstChoice).trim();
+            const matches = [...choiceText.matchAll(/([①②③④⑤])\s*/g)];
+            const choices = [];
+
+            matches.forEach((match, index) => {
+                const symbol = match[1];
+                const start = match.index + match[0].length;
+                const end = index + 1 < matches.length ? matches[index + 1].index : choiceText.length;
+                const text = choiceText.slice(start, end).replace(/\s*\n\s*/g, " ").trim();
+                choices.push({ symbol, text });
+            });
+
+            return { stem, choices };
+        }
+
+        function buildPaperHeader(kind) {
+            const isAnswer = kind === 'answer';
+            return `
+                <div class="paper-brand">YMS · 책의 온도</div>
+                <h1 class="paper-title">${isAnswer ? '독서 평가 정답 및 해설' : '독서 평가'}</h1>
+                <div class="paper-book">도서명: <strong>${escapeHtml(currentBookTitle)}</strong> · 작가: ${escapeHtml(currentAuthor)}</div>
+                <div class="paper-rule"></div>
+                ${isAnswer ? `
+                    <div class="student-info teacher-info">
+                        <div class="label">구분</div><div>교사용</div>
+                    </div>
+                ` : `
+                    <div class="student-info student-info-simple">
+                        <div class="label">이름</div><div></div>
+                        <div class="label">실시일</div><div>20____년 ____월 ____일</div>
+                    </div>
+                `}
+            `;
+        }
+
+        function buildQuizHtml(text) {
+            const questions = parseQuestions(text);
+            if (!questions.length) {
+                return buildPaperHeader('quiz') + `<div class="raw-fallback">${inlineMarkdown(normalizeModelText(text))}</div>`;
+            }
+
+            const objective = questions.filter(q => q.number <= 3);
+            const essay = questions.filter(q => q.number >= 4);
+
+            let html = buildPaperHeader('quiz');
+
+            if (objective.length) {
+                html += `<div class="exam-section-title">Ⅰ. 객관식</div>`;
+                html += `<div class="exam-guide">※ 각 문항에서 가장 알맞은 답을 하나 고르시오.</div>`;
+
+                objective.forEach(q => {
+                    const parsed = splitChoices(q.body);
+                    html += `
+                        <div class="question-block">
+                            <div class="question-line">
+                                <div class="qnum">${q.number}.</div>
+                                <div>${inlineMarkdown(parsed.stem)}</div>
+                            </div>
+                            ${parsed.choices.length ? `
+                                <div class="choice-list">
+                                    ${parsed.choices.map(c => `
+                                        <div class="choice-item">
+                                            <div class="choice-symbol">${c.symbol}</div>
+                                            <div>${inlineMarkdown(c.text)}</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+            }
+
+            if (essay.length) {
+                html += `<div class="exam-section-title">Ⅱ. 서술형</div>`;
+                html += `<div class="exam-guide">※ 책의 내용을 바탕으로 자신의 생각을 구체적으로 서술하시오.</div>`;
+
+                essay.forEach(q => {
+                    html += `
+                        <div class="question-block essay-question">
+                            <div class="question-line">
+                                <div class="qnum">${q.number}.</div>
+                                <div>${inlineMarkdown(q.body.replace(/\s*\n\s*/g, ' '))}</div>
+                            </div>
+                            <div class="answer-lines">
+                                ${Array.from({ length: 7 }).map(() => `<div class="answer-line"></div>`).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+
+            return html;
+        }
+
+        function buildAnswerHtml(text) {
+            const clean = normalizeModelText(text);
+            const questions = parseQuestions(clean);
+            let html = buildPaperHeader('answer');
+
+            if (!questions.length) {
+                html += `<div class="raw-fallback">${inlineMarkdown(clean).replace(/\n/g, '<br>')}</div>`;
+                return html;
+            }
+
+            html += `<div class="exam-section-title">정답 및 해설</div>`;
+
+            questions.forEach(q => {
+                const bodyHtml = inlineMarkdown(q.body)
+                    .replace(/\n{2,}/g, '</p><p>')
+                    .replace(/\n/g, '<br>');
+                html += `
+                    <div class="answer-card">
+                        <div class="answer-card-head">${q.number}번</div>
+                        <div class="answer-card-body"><p>${bodyHtml}</p></div>
+                    </div>
+                `;
+            });
+
+            return html;
+        }
+
+        function formatExamText(text, type = 'quiz') {
+            return type === 'answer' ? buildAnswerHtml(text) : buildQuizHtml(text);
+        }
+
+        function getPrintStyles() {
+            return `
+                @page { size: A4; margin: 14mm 15mm 15mm; }
+                * { box-sizing: border-box; }
+                html, body { margin: 0; padding: 0; background: #fff; color: #111; }
+                body { font-family: "Malgun Gothic", "Apple SD Gothic Neo", Arial, sans-serif; }
+                .exam-paper { width: 100%; margin: 0; padding: 0; box-shadow: none; }
+                .paper-brand { font-size: 8.5px; font-weight: 800; color: #666; letter-spacing: .14em; margin-bottom: 4px; }
+                .paper-title { text-align: center; font-size: 23px; line-height: 1.2; font-weight: 900; letter-spacing: -.04em; margin: 0; }
+                .paper-book { text-align: center; font-size: 11px; color: #444; margin-top: 6px; }
+                .paper-rule { height: 3px; background: #111; margin: 12px 0 10px; }
+                .student-info { display: grid; grid-template-columns: 66px 1fr 66px 1fr; border-top: 1px solid #999; border-left: 1px solid #999; margin-bottom: 16px; font-size: 10px; }
+                .student-info > div { min-height: 31px; display: flex; align-items: center; padding: 5px 7px; border-right: 1px solid #999; border-bottom: 1px solid #999; }
+                .student-info .label { justify-content: center; background: #f3f3f3; font-weight: 800; }
+                .exam-section-title { margin: 17px 0 10px; padding: 7px 9px; border-top: 2px solid #111; border-bottom: 1px solid #999; background: #f7f7f7; font-size: 11px; font-weight: 900; }
+                .exam-guide { margin: -2px 0 11px; font-size: 9.3px; color: #555; }
+                .question-block { break-inside: avoid; page-break-inside: avoid; margin: 0 0 15px; }
+                .question-line { display: grid; grid-template-columns: 23px 1fr; gap: 4px; align-items: start; font-size: 10.4pt; line-height: 1.53; font-weight: 700; }
+                .qnum { font-weight: 900; }
+                .choice-list { margin: 7px 0 0 27px; display: grid; grid-template-columns: 1fr; gap: 4px; }
+                .choice-item { display: grid; grid-template-columns: 20px 1fr; gap: 4px; font-size: 9.6pt; line-height: 1.43; font-weight: 400; }
+                .choice-symbol { font-weight: 700; }
+                .essay-question { margin-bottom: 12px; }
+                .answer-lines { margin: 7px 0 19px 27px; }
+                .answer-line { height: 25px; border-bottom: 1px solid #c9c9c9; }
+                .answer-card { break-inside: avoid; page-break-inside: avoid; border: 1px solid #c7c7c7; margin-bottom: 13px; }
+                .answer-card-head { background: #f3f4f6; border-bottom: 1px solid #c7c7c7; padding: 7px 9px; font-size: 10.5px; font-weight: 900; }
+                .answer-card-body { padding: 9px 11px; font-size: 9.7pt; line-height: 1.5; }
+                .answer-card-body p { margin: 4px 0; }
+                .raw-fallback { white-space: pre-wrap; font-size: 10pt; line-height: 1.6; }
+            `;
+        }
+
+        function openPrintWindow(content, title) {
+            const printWindow = window.open('', '_blank');
+            if (!printWindow) {
+                alert('팝업이 차단되어 있습니다. 이 사이트의 팝업을 허용한 뒤 다시 시도해주세요.');
+                return;
+            }
+
+            printWindow.document.open();
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="ko">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>${escapeHtml(title)}</title>
+                    <style>${getPrintStyles()}</style>
+                </head>
+                <body>
+                    <div class="exam-paper">${content}</div>
+                    <script>
+                        window.onload = function() {
+                            setTimeout(function() { window.print(); }, 250);
+                        };
+                    <\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+        }
+
+        function printOnlyQuiz() {
+            openPrintWindow(
+                document.getElementById('tab-quiz').innerHTML,
+                `[책의 온도] 학생용 문제지 - ${currentBookTitle}`
+            );
+        }
+
+        function printOnlyAnswer() {
+            openPrintWindow(
+                document.getElementById('tab-answer').innerHTML,
+                `[책의 온도] 교사용 정답지 - ${currentBookTitle}`
+            );
+        }
+
+        async function generateQuiz() {
+            const grade = document.getElementById('grade').value.trim();
+            const bookTitle = document.getElementById('bookTitle').value.trim();
+            const authorName = document.getElementById('authorName').value.trim() || "정보 없음";
+
+            if (!bookTitle || !grade) {
+                alert("학년과 책 제목을 모두 입력해주세요!");
+                return;
+            }
+
+            currentBookTitle = bookTitle;
+            currentGrade = grade;
+            currentAuthor = authorName;
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            document.getElementById('loading').classList.add('active');
+            document.getElementById('result-section').classList.remove('active');
+
+            const systemPrompt = `
 # 역할
 당신은 20년 경력의 초·중등 국어 독서교육 전문가이자 교육부 권장도서 독서활동 평가문항 출제위원이다.
 사용자는 [책 제목], [작가 이름], [학년]을 입력한다. 당신은 실제 책 내용을 기반으로 독서 이해 문제를 만든다.
@@ -51,7 +756,7 @@
 - 대신 아래와 같이 답변한다:
   "이 책의 내용을 정확하게 확인할 수 없습니다.
   책 표지와 목차 또는 본문 일부를 업로드해 주시면 실제 내용을 기반으로 문제를 제작하겠습니다."
-- 인사말이나 서두 멘트는 절대 출력하지 말고 곧바로 시험지 내용만 출력할 것.
+- 인사말이나 서두 멘트("안녕하세요" 등)는 절대 출력하지 말고 곧바로 시험지 내용만 출력할 것.
 
 # 학년별 난이도 및 출제 초점
 - 초1~2: 등장인물, 장소, 사건, 순서
@@ -59,43 +764,66 @@
 - 초5~6: 주제, 교훈, 인물의 변화, 추론
 - 중학생: 주제, 인물의 가치관, 갈등, 추론, 비판적 사고
 
-# 문제 구성 (총 5문항)
-1. 객관식 3문항
-- 형식: 항상 5지선다형 (가, 나, 다, 라, 마)
-- 객관식 규칙: 정답은 하나, 오답도 그럴듯하게, 지엽적인 숫자 배제, 핵심 내용 위주.
-2. 서술형 2문항
-- 학생용 발문과 함께 교사/학부모를 위한 '모범 답안' 및 '채점 기준' 제공.
+# 문제 구성 및 보기 형식 (매우 중요)
+1. 객관식 3문항 (1., 2., 3. 번호로 시작할 것)
+   - 형식: 항상 5지선다형으로 출제하되, 선택지 번호를 ①, ②, ③, ④, ⑤ 로 표기하고 각 선택지는 반드시 줄바꿈(개행)하여 작성할 것.
+2. 서술형 2문항 (4., 5. 번호로 시작할 것)
+   - 학생용 발문과 함께 교사/학부모를 위한 '모범 답안' 및 '채점 기준'을 함께 제공할 것.
 
 # 출력 양식
-- 마크다운을 활용하되, 가독성 좋게 출력할 것.
-- 결과물을 [문제지] 와 [정답지] 섹션으로 명확히 구분할 것.
-- [문제지] 섹션 맨 위에 반드시 학생 작성란 포함:
----
-**[독서 활동 평가지]**
-- **학년/반**: [ ]학년 [ ]반 | **번호**: [ ]번 | **이름**: [ ]
----
+반드시 결과물을 아래 두 섹션 태그로 명확히 구분해서 출력할 것. 다른 잡동사니 텍스트는 포함하지 말 것.
+[문제지]
+(문항 내용 작성)
+[정답지]
+(정답 및 해설 작성)
+`;
 
-입력 데이터: 학년:${data.grade}, 책:${data.book}, 작가:${data.author}`;
+            const userPrompt = `학년: ${grade}\n책 제목: ${bookTitle}\n작가 이름: ${authorName}\n\n[문제지]와 [정답지]를 명확히 구분하여 출제해주세요.`;
 
-            const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key="+API_KEY, {
-                method: "POST", headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({contents: [{role: "user", parts: [{text: prompt}]}]})
-            });
-            const json = await res.json();
-            const text = json.candidates[0].content.parts[0].text;
-            const [q, a] = text.split("[정답지]");
-            
-            document.getElementById('quiz-page').innerHTML = `<div class="exam-header"><div class="exam-title">🔥 책의 온도 독서 평가지</div><div class="exam-info"><div>도서명: ${data.book} (${data.grade})</div><div>이름: ___________</div></div></div>` + parse(q);
-            document.getElementById('answer-page').innerHTML = `<div class="exam-header"><div class="exam-title">🔑 교사용 정답 및 해설</div></div>` + parse(a);
-            document.getElementById('output').classList.remove('hidden');
-        }
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${FIXED_API_KEY}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [
+                            { role: "user", parts: [{ text: systemPrompt + "\n\n" + userPrompt }] }
+                        ]
+                    })
+                });
 
-        function parse(t) {
-            return t.replace(/\[문제지\]/g, '').trim()
-                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                .replace(/(\n\s*[1-5]\.\s+|\n\s*\[?[0-9]+번\]?)/g, '<div class="question-block"><strong style="font-size:1.1rem;">$1</strong>')
-                .replace(/([가-마]\.\s*|[①②③④⑤]\s*)/g, '<span class="option-item">$1</span>')
-                .replace(/\[답안 작성란\]/g, '<div class="answer-box"></div>');
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error.message);
+                }
+
+                if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts || !data.candidates[0].content.parts[0]) {
+                    throw new Error("AI 응답 형식을 확인할 수 없습니다.");
+                }
+
+                const fullResult = data.candidates[0].content.parts[0].text;
+
+                if (fullResult.includes("[문제지]") && fullResult.includes("[정답지]")) {
+                    const parts = fullResult.split("[정답지]");
+                    quizText = parts[0].replace("[문제지]", "").trim();
+                    answerText = parts[1].trim();
+                } else {
+                    quizText = fullResult;
+                    answerText = "정답지를 분리하는 과정에서 형식이 일치하지 않았습니다.";
+                }
+
+                document.getElementById('tab-quiz').innerHTML = formatExamText(quizText, 'quiz');
+                document.getElementById('tab-answer').innerHTML = formatExamText(answerText, 'answer');
+
+                switchTab('quiz');
+                document.getElementById('result-section').classList.add('active');
+                document.getElementById('result-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } catch (error) {
+                alert(`오류가 발생했습니다: ${error.message}`);
+            } finally {
+                document.getElementById('loading').classList.remove('active');
+                submitBtn.disabled = false;
+            }
         }
     </script>
 </body>
