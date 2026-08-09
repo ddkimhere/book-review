@@ -94,7 +94,7 @@ if submit:
             user_prompt = f"대상 학년: {grade}\n책 제목: {book_title}\n작가 이름: {target_author}\n\n[문제지]와 [정답지]를 명확히 구분하여 출제해주세요."
 
             with st.spinner("전문가 페르소나가 시험지를 제작 중입니다..."):
-                model = genai.GenerativeModel(model_name="gemini-1.5-flash", system_instruction=system_prompt)
+                model = genai.GenerativeModel(model_name="gemini-3.5-flash", system_instruction=system_prompt)
                 response = model.generate_content(user_prompt)
                 full_result = response.text
             
