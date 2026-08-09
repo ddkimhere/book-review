@@ -1,178 +1,102 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>책의 온도 · 독서 평가 생성기</title>
-<style>
-:root{
-  --ink:#20242a; --muted:#6b7280; --line:#d8dde5; --accent:#c65a2e;
-  --soft:#f6f7f9; --paper:#fff;
-}
-*{box-sizing:border-box}
-body{margin:0;background:#eef1f4;color:var(--ink);font-family:"Malgun Gothic","Apple SD Gothic Neo",sans-serif}
-button,input{font:inherit}
-.app{max-width:1180px;margin:0 auto;padding:28px}
-.panel{background:#fff;border:1px solid #e1e5ea;border-radius:18px;box-shadow:0 10px 30px rgba(30,40,50,.07);padding:24px}
-h1{margin:0;font-size:28px}
-.sub{color:var(--muted);margin:7px 0 0}
-.form-grid{display:grid;grid-template-columns:1fr 1.6fr 1fr;gap:14px;margin-top:22px}
-label{display:block;font-size:12px;font-weight:800;margin-bottom:7px;color:#555}
-input{width:100%;padding:12px 13px;border:1px solid #cfd5dc;border-radius:10px;background:#fff}
-.primary{margin-top:16px;width:100%;padding:14px;border:0;border-radius:11px;background:#222;color:#fff;font-weight:800;cursor:pointer}
-.secondary{padding:11px 15px;border:1px solid #cfd5dc;border-radius:10px;background:#fff;font-weight:700;cursor:pointer}
-.status{margin-top:16px;padding:12px;border-radius:10px;background:#f7efe9;color:#8c431f;display:none}
-.toolbar{display:flex;justify-content:space-between;align-items:center;margin:22px 0 12px;gap:10px}
-.toolbar .actions{display:flex;gap:8px}
-#preview{display:none}
-
-/* ===== A4 exam paper ===== */
-.paper{
-  width:210mm; min-height:297mm; margin:0 auto 20px; padding:14mm 15mm 16mm;
-  background:var(--paper); color:#111; box-shadow:0 8px 28px rgba(0,0,0,.12);
-  position:relative;
-}
-.paper + .paper{page-break-before:always}
-.exam-top{border-top:3px solid #202020;border-bottom:1px solid #777;padding:8mm 0 5mm;margin-bottom:6mm}
-.brand{font-size:10pt;letter-spacing:.08em;font-weight:800;color:#777}
-.exam-title{font-size:23pt;font-weight:900;letter-spacing:-.04em;margin:2mm 0 1mm}
-.book-line{font-size:10.5pt;color:#555}
-.info-table{width:100%;border-collapse:collapse;margin-top:5mm}
-.info-table td{border:1px solid #aeb4bc;padding:3.2mm 4mm;font-size:10pt}
-.info-table td:first-child{font-weight:800;background:#f7f7f7;width:20%}
-.section-title{margin:7mm 0 4mm;padding:2.5mm 3mm;border-left:5px solid #222;background:#f2f3f5;font-size:12pt;font-weight:900}
-.q{margin:0 0 7mm;break-inside:avoid;page-break-inside:avoid}
-.q-head{display:flex;gap:6px;align-items:flex-start;font-size:11pt;font-weight:800;line-height:1.65}
-.q-num{flex:0 0 auto}
-.q-body{flex:1}
-.options{margin:2.5mm 0 0 7mm}
-.opt{display:flex;gap:7mm;align-items:flex-start;margin:1.5mm 0;line-height:1.55;font-size:10.5pt}
-.opt-label{flex:0 0 6mm}
-.opt-text{flex:1}
-.answer-circle{display:inline-block;width:4.5mm;height:4.5mm;border:1px solid #999;border-radius:50%;vertical-align:-.8mm;margin-right:1mm}
-.short-box{margin:3mm 0 0 7mm;border:1px solid #aaa;min-height:42mm;padding:3mm}
-.line{height:8mm;border-bottom:1px solid #c7c7c7}
-.score-box{float:right;border:1px solid #555;padding:1.5mm 4mm;font-size:9pt;font-weight:800}
-.footer{position:absolute;bottom:7mm;left:15mm;right:15mm;border-top:1px solid #ddd;padding-top:2mm;font-size:8pt;color:#888;display:flex;justify-content:space-between}
-.instruction{font-size:9pt;color:#666;margin:0 0 4mm}
-.answer-page .q{margin-bottom:6mm}
-.answer{margin:2mm 0 0 7mm;background:#f7f7f7;border-left:3px solid #555;padding:3mm 4mm;font-size:9.5pt;line-height:1.6}
-.rubric{margin:2mm 0 0 7mm;font-size:9pt;color:#444;line-height:1.55}
-.rubric strong{color:#111}
-
-@page{size:A4;margin:0}
-@media print{
-  body{background:#fff}
-  .no-print,.app>.panel,.toolbar{display:none!important}
-  #preview{display:block!important}
-  .paper{margin:0;box-shadow:none}
-}
-@media(max-width:800px){
- .app{padding:12px}.form-grid{grid-template-columns:1fr}
- .paper{width:100%;min-height:auto;padding:25px}
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>책의 온도 - 읽은 만큼 성장합니다.</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        @media print {
+            header, footer, button, input, .no-print { display: none !important; }
+            body { background-color: white !important; color: black !important; font-size: 11pt !important; }
+            .print-area { display: block !important; visibility: visible !important; box-shadow: none !important; border: none !important; padding: 0 !important; }
+        }
+        .exam-layout { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; line-height: 1.8; color: #111; white-space: pre-wrap; }
+        .question-box { margin-top: 40px; margin-bottom: 20px; page-break-inside: avoid; }
+        .option-item { display: block; margin-top: 8px; margin-left: 25px; font-size: 10.5pt; }
+    </style>
 </head>
-<body>
-<div class="app">
-  <div class="panel no-print">
-    <h1>책의 온도 · 독서 평가 생성기</h1>
-    <p class="sub">학생에게 바로 배부할 수 있는 A4 시험지 형태로 생성합니다.</p>
-    <div class="form-grid">
-      <div><label>학년</label><input id="grade" value="중학교 1학년"></div>
-      <div><label>책 제목</label><input id="bookTitle" placeholder="예: 불안 쫌 아는 10대"></div>
-      <div><label>작가</label><input id="author" placeholder="예: 이재환"></div>
-    </div>
-    <button class="primary" onclick="generateExam()">독서 평가 시험지 만들기</button>
-    <div id="status" class="status"></div>
-  </div>
+<body class="bg-slate-100 text-slate-950 min-h-screen flex flex-col items-center p-4 sm:p-6">
 
-  <div id="preview"></div>
-</div>
-
-<script>
-let exam = null;
-const FIXED_API_KEY = "AQ.Ab8RN6IIifBfy5NyxOxhyXXCFk2pi9fY7nqljNu03sB2pqVVHg";
-
-function esc(s){
-  return String(s ?? "").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
-}
-function lines(n=4){return Array.from({length:n},()=>'<div class="line"></div>').join("")}
-
-function renderHeader(data){
-  return `
-    <div class="exam-top">
-      <div class="brand">YMS · 책의 온도</div>
-      <div class="exam-title">독서 평가</div>
-      <div class="book-line"><strong>${esc(data.bookTitle)}</strong> · ${esc(data.author || "작가 정보 없음")}</div>
-      <table class="info-table">
-        <tr><td>학년</td><td>${esc(data.grade)}</td><td>이름</td><td style="width:28%"></td></tr>
-        <tr><td>실시일</td><td>20____년 ____월 ____일</td><td>점수</td><td></td></tr>
-      </table>
-    </div>`;
-}
-
-function renderStudent(data){
-  const mc=data.questions.filter(q=>q.type==="multiple_choice");
-  const sa=data.questions.filter(q=>q.type==="short_answer");
-  return `<div class="paper">
-    ${renderHeader(data)}
-    <div style="border:1px solid #aeb4bc;padding:3mm 4mm;margin-bottom:5mm;font-size:9.5pt;background:#fafafa">
-      <strong>[독서 활동 평가지]</strong><br>
-      - <strong>학년/반</strong>: [ &nbsp; &nbsp; &nbsp; ]학년 [ &nbsp; &nbsp; &nbsp; ]반 &nbsp; | &nbsp; <strong>번호</strong>: [ &nbsp; &nbsp; &nbsp; ]번 &nbsp; | &nbsp; <strong>이름</strong>: [ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ]
-    </div>
-    <div class="section-title">Ⅰ. 객관식 · ${mc.length}문항</div>
-    <p class="instruction">※ 각 문항의 가장 알맞은 답을 하나 고르시오.</p>
-    ${mc.map((q,i)=>`
-      <div class="q">
-        <div class="q-head"><span class="q-num">${i+1}.</span><span class="q-body">${esc(q.question)}</span></div>
-        <div class="options">
-          ${(q.options||[]).map((o,j)=>`<div class="opt"><span class="opt-label"><span class="answer-circle"></span>${["①","②","③","④","⑤"][j]}</span><span class="opt-text">${esc(o)}</span></div>`).join("")}
+    <div class="w-full max-w-4xl bg-white rounded-2xl shadow-xl p-6 sm:p-10 my-4">
+        <div class="text-center mb-8 no-print">
+            <h1 class="text-2xl sm:text-4xl font-black text-orange-600 mb-2">🔥 책의 온도</h1>
+            <p class="text-sm font-medium text-slate-500">초·중등 독서교육 전문가 맞춤형 독서 평가 프로그램 (Gemini 3.5 Flash)</p>
         </div>
-      </div>`).join("")}
-    <div class="section-title">Ⅱ. 서술형 · ${sa.length}문항</div>
-    <p class="instruction">※ 책의 내용을 바탕으로 자신의 생각을 논리적으로 서술하시오.</p>
-    ${sa.map((q,i)=>`
-      <div class="q">
-        <div class="q-head"><span class="q-num">${mc.length+i+1}.</span><span class="q-body">${esc(q.question)}</span></div>
-        <div class="short-box">${lines(q.answerLines || 5)}</div>
-      </div>`).join("")}
-    <div class="footer"><span>책의 온도 · 독서 평가</span><span>학생용 문제지</span></div>
-  </div>`;
-}
 
-function renderAnswer(data){
-  return `<div class="paper answer-page">
-    ${renderHeader(data)}
-    <div class="section-title">교사용 정답 및 해설지</div>
-    <p class="instruction">학생용 문제지와 동일한 문항 번호를 사용합니다.</p>
-    ${data.questions.map((q,i)=>{
-      const num=i+1;
-      if(q.type==="multiple_choice"){
-        return `<div class="q">
-          <div class="q-head"><span class="q-num">${num}.</span><span class="q-body">${esc(q.question)}</span></div>
-          <div class="answer"><strong>정답: ${esc(q.answer)}</strong><br>${esc(q.explanation)}</div>
-        </div>`;
-      }
-      return `<div class="q">
-        <div class="q-head"><span class="q-num">${num}.</span><span class="q-body">${esc(q.question)}</span></div>
-        <div class="answer"><strong>모범 답안</strong><br>${esc(q.modelAnswer)}</div>
-        <div class="rubric"><strong>채점 기준</strong><br>${esc(q.rubric)}</div>
-      </div>`;
-    }).join("")}
-    <div class="footer"><span>책의 온도 · 독서 평가</span><span>교사용 정답 및 해설</span></div>
-  </div>`;
-}
+        <div id="form-section" class="space-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-200 no-print mb-8">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">학년</label>
+                    <input type="text" id="grade" value="중학교 2학년" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl bg-white text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">책 제목</label>
+                    <input type="text" id="bookTitle" placeholder="예: 소년이 온다" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl bg-white text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">작가 이름</label>
+                    <input type="text" id="authorName" placeholder="예: 한강" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl bg-white text-sm">
+                </div>
+            </div>
+            <button onclick="generateQuiz()" id="submitBtn" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3.5 rounded-xl transition shadow-md cursor-pointer">✨ 전문가 시험지 자동 출제하기</button>
+        </div>
 
-async function generateExam(){
-  const grade=document.getElementById("grade").value.trim();
-  const bookTitle=document.getElementById("bookTitle").value.trim();
-  const author=document.getElementById("author").value.trim();
-  const status=document.getElementById("status");
-  if(!grade||!bookTitle){alert("학년과 책 제목을 모두 입력해주세요.");return}
-  status.style.display="block";status.textContent="책 내용을 확인하고 문항을 구성하는 중입니다…";
+        <div id="loading" class="hidden text-center py-16 no-print">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent"></div>
+            <p class="mt-4 text-slate-600 font-bold text-lg">전문가 페르소나가 시험지를 제작 중입니다...</p>
+        </div>
 
-  const prompt=`# 역할
+        <div id="result-section" class="hidden">
+            <div class="flex border-b border-slate-200 mb-6 no-print">
+                <button onclick="switchTab('quiz')" id="tab-quiz-btn" class="flex-1 py-3 font-bold text-orange-600 border-b-2 border-orange-600">📝 학생용 문제지</button>
+                <button onclick="switchTab('answer')" id="tab-answer-btn" class="flex-1 py-3 font-bold text-slate-400 border-b-2 border-transparent">🔑 교사용 정답지</button>
+            </div>
+            <div id="tab-quiz" class="print-area exam-layout bg-white p-6 rounded-2xl border shadow-sm"></div>
+            <div id="tab-answer" class="print-area exam-layout bg-white p-6 rounded-2xl border shadow-sm hidden"></div>
+
+            <div class="mt-8 p-5 bg-orange-50 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 no-print">
+                <p class="text-sm font-medium text-orange-900">🖨️ 하단 버튼을 눌러 인쇄하세요.</p>
+                <div class="flex gap-3">
+                    <button onclick="printOnlyQuiz()" class="bg-slate-800 text-white px-5 py-2 rounded-xl text-xs font-bold">📄 학생용 인쇄</button>
+                    <button onclick="printOnlyAnswer()" class="bg-orange-600 text-white px-5 py-2 rounded-xl text-xs font-bold">🔑 교사용 인쇄</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const FIXED_API_KEY = "AQ.Ab8RN6IIifBfy5NyxOxhyXXCFk2pi9fY7nqljNu03sB2pqVVHg";
+        let quizText = "", answerText = "", currentBookTitle = "", currentGrade = "", currentAuthor = "";
+
+        function switchTab(type) {
+            document.getElementById('tab-quiz').classList.toggle('hidden', type !== 'quiz');
+            document.getElementById('tab-answer').classList.toggle('hidden', type !== 'answer');
+        }
+
+        function formatExamText(text) {
+            let cleaned = text.replace(/---/g, '').replace(/\[문제지\]/g, '').replace(/\[정답지\]/g, '').trim();
+            cleaned = cleaned.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold">$1</strong>');
+            cleaned = cleaned.replace(/(\n\s*[1-5]\.\s+|\n\s*\[?[0-9]+번\]?)/g, '<br><br><div class="question-box"><strong style="font-size:1.1rem;">$1</strong>');
+            cleaned = cleaned.replace(/([가-마]\.\s*|[①②③④⑤]\s*)/g, '<br><span class="option-item">$1</span>');
+            return cleaned;
+        }
+
+        function printPage(title, content) {
+            const w = window.open('', '_blank');
+            w.document.write(`<html><head><title>${title}</title><style>body{font-family:Malgun Gothic; padding:40px; line-height:1.8;} .exam-header{border-bottom:3px solid #000; padding-bottom:20px; margin-bottom:30px;} .exam-info{display:flex; justify-content:space-between; margin-top:15px; font-weight:bold; background:#f9f9f9; padding:10px;} .question-box{margin-top:30px; margin-bottom:30px;} .option-item{display:block; margin-top:8px; margin-left:25px;}</style></head><body>
+                <div class="exam-header"><h1>${title} (${currentBookTitle})</h1><div class="exam-info"><div>학년: ${currentGrade}</div><div>이름: ___________</div></div></div>${content}<script>window.onload=()=>window.print()<\/script></body></html>`);
+            w.document.close();
+        }
+
+        async function generateQuiz() {
+            const grade = document.getElementById('grade').value, bookTitle = document.getElementById('bookTitle').value, authorName = document.getElementById('authorName').value;
+            if (!bookTitle || !grade) return alert("학년과 책 제목을 입력해주세요.");
+            currentBookTitle = bookTitle; currentGrade = grade; currentAuthor = authorName;
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('result-section').classList.add('hidden');
+
+            const systemPrompt = `# 역할
 당신은 20년 경력의 초·중등 국어 독서교육 전문가이자 교육부 권장도서 독서활동 평가문항 출제위원이다.
 사용자는 [책 제목], [작가 이름], [학년]을 입력한다. 당신은 실제 책 내용을 기반으로 독서 이해 문제를 만든다.
 
@@ -197,7 +121,7 @@ async function generateExam(){
 * 정답은 반드시 하나여야 함
 * 오답도 그럴듯하게 출제할 것
 * "모두 맞다", "모두 아니다" 같은 선택지 사용 금지
-* 정답의 위치(1번~5번)를 매번 다르게 랜덤 배치할 것
+* 정답의 위치(1~5번)를 매번 다르게 랜덤 배치할 것
 * 지엽적인 세부 내용(단순 암기용 숫자, 연도 등)은 금지하고 핵심 내용 위주로 출제할 것
 
 2. 서술형 2문항
@@ -214,56 +138,41 @@ async function generateExam(){
 **[독서 활동 평가지]**
 - **학년/반**: [ ]학년 [ ]반 | **번호**: [ ]번 | **이름**: [ ]
 ---
-- 반드시 결과물을 [문제지] 와 [정답지] 섹션으로 명확히 구분할 것.
+- 반드시 결과물을 [문제지] 와 [정답지] 섹션으로 명확히 구분할 것.`;
 
-입력 데이터:
-학년: ${grade}
-책 제목: ${bookTitle}
-작가: ${author||"정보 없음"}
+            const userPrompt = `학년: ${grade}\n책 제목: ${bookTitle}\n작가 이름: ${authorName || "정보 없음"}\n\n[문제지]와 [정답지]를 명확히 구분하여 출제해주세요.`;
 
-만약 책 내용을 정확히 확인할 수 없는 경우, 반드시 다음 JSON 구조 중 verified를 false로 하고 message에 안내 문구를 담아 출력하라.
-확인 가능한 경우 아래 JSON 구조로만 출력하라. (마크다운 코드블록이나 다른 설명 문구는 일체 출력하지 말 것)
+            try {
+                // gemini-3.5-flash 모델로 고정
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${FIXED_API_KEY}`, {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({contents: [{role: "user", parts: [{text: systemPrompt + "\n\n" + userPrompt}]}]})
+                });
+                const data = await res.json();
+                if (data.error) throw new Error(data.error.message);
+                const text = data.candidates[0].content.parts[0].text;
 
-JSON 구조:
-{
- "verified": true,
- "bookTitle": "${bookTitle}",
- "author": "${author}",
- "grade": "${grade}",
- "questions": [
-   {"type":"multiple_choice","question":"...","options":["...","...","...","...","..."],"answer":"①","explanation":"..."},
-   {"type":"multiple_choice","question":"...","options":["...","...","...","...","..."],"answer":"②","explanation":"..."},
-   {"type":"multiple_choice","question":"...","options":["...","...","...","...","..."],"answer":"③","explanation":"..."},
-   {"type":"short_answer","question":"...","modelAnswer":"...","rubric":"...","answerLines":6},
-   {"type":"short_answer","question":"...","modelAnswer":"...","rubric":"...","answerLines":6}
- ]
-}
-책 내용을 정확히 확인할 수 없다면:
-{"verified":false,"bookTitle":"${bookTitle}","author":"${author}","grade":"${grade}","message":"이 책의 내용을 정확하게 확인할 수 없습니다.\n책 표지와 목차 또는 본문 일부를 업로드해 주시면 실제 내용을 기반으로 문제를 제작하겠습니다.","questions":[]}`;
+                if (text.includes("[문제지]") && text.includes("[정답지]")) {
+                    const parts = text.split("[정답지]");
+                    quizText = parts[0].replace("[문제지]", "").trim();
+                    answerText = parts[1].trim();
+                } else {
+                    quizText = text;
+                    answerText = "정답지 형식이 일치하지 않습니다.";
+                }
 
-  try{
-    const res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key="+encodeURIComponent(FIXED_API_KEY),{
-      method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],
-        generationConfig:{responseMimeType:"application/json"}})
-    });
-    const data=await res.json();
-    if(data.error) throw new Error(data.error.message||"API 오류");
-    const text=data.candidates?.[0]?.content?.parts?.[0]?.text;
-    if(!text) throw new Error("생성 결과가 없습니다.");
-    exam=JSON.parse(text);
-    if(!exam.verified) throw new Error(exam.message||"책 내용을 확인할 수 없습니다.");
-    if(!Array.isArray(exam.questions)||exam.questions.length!==5) throw new Error("문항 구성 오류: 3+2 문항이 아닙니다.");
-    if(exam.questions.slice(0,3).some(q=>q.type!=="multiple_choice"||q.options?.length!==5)) throw new Error("객관식 문항 형식 오류입니다.");
-    if(exam.questions.slice(3).some(q=>q.type!=="short_answer")) throw new Error("서술형 문항 형식 오류입니다.");
+                document.getElementById('tab-quiz').innerHTML = formatExamText(quizText);
+                document.getElementById('tab-answer').innerHTML = formatExamText(answerText);
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('result-section').classList.remove('hidden');
+            } catch(e) {
+                document.getElementById('loading').classList.add('hidden');
+                alert("오류가 발생했습니다: " + e.message);
+            }
+        }
 
-    document.getElementById("preview").innerHTML=renderStudent(exam)+renderAnswer(exam);
-    status.style.display="none";
-    window.scrollTo({top:document.getElementById("preview").offsetTop-20,behavior:"smooth"});
-  }catch(e){
-    status.textContent="생성 실패: "+e.message;
-  }
-}
-</script>
+        function printOnlyQuiz() { printPage("학생용 문제지", document.getElementById('tab-quiz').innerHTML); }
+        function printOnlyAnswer() { printPage("교사용 정답지", document.getElementById('tab-answer').innerHTML); }
+    </script>
 </body>
 </html>
