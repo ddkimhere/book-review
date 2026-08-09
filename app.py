@@ -3,16 +3,16 @@ import streamlit as st
 import google.generativeai as genai
 
 # 1. 페이지 설정 (가장 먼저 위치해야 합니다)
-st.set_page_config(page_title="책의 온도 - 독서활동 평가문항 출제기", page_icon="📚", layout="centered")
+st.set_page_config(page_title="책의 온도 - 읽은 만큼 성장합니다.", page_icon="📚", layout="centered")
 
 # 메인 타이틀 적용
 st.title("🔥 책의 온도 - 읽은 만큼 성장합니다.")
-st.caption("초·중등 독서교육 전문가 맞춤형 퀴즈 출제 프로그램 (Google Gemini)")
+st.caption("초·중등 독서교육 전문가 맞춤형 퀴즈 출제 프로그램 (Gemini 3.5)")
 
 # Google API 키 입력받기 (비밀번호 형태로 숨김 처리)
 user_api_key = st.text_input("Google API Key를 입력하세요", type="password")
 
-# 사용자 입력 폼 (학년, 책 제목, 작가 이름 추가)
+# 사용자 입력 폼 (학년, 책 제목, 작가 이름 포함)
 with st.form("expert_quiz_form"):
     grade = st.text_input("학년을 입력하세요 (예: 초등학교 3학년, 중학교 2학년)", value="중학교 2학년")
     book_title = st.text_input("책 제목을 입력하세요 (예: 난쟁이가 쏘아 올린 작은 공)", value="")
@@ -71,9 +71,9 @@ if submit_button:
             user_prompt = f"대상 학년: {grade}\n책 제목: {book_title}\n작가 이름: {author_name if author_name else '입력 안 함'}\n\n[문제지]와 [정답지]를 명확히 구분하여 객관식 3문제(5지선다)와 서술형 2문제를 출제해주세요."
 
             with st.spinner("전문가 페르소나가 책과 작가 정보를 분석하고 고품질 문항을 출제하는 중입니다..."):
-                # 더욱 정교한 분석을 위해 제미나이 프로/플래시 모델 적용
+                # Gemini 3.5 모델 지정 (상황에 따라 gemini-3.5-pro 로 변경 가능)
                 model = genai.GenerativeModel(
-                    model_name="gemini2.5-pro",
+                    model_name="gemini-3.5-flash",
                     system_instruction=system_prompt
                 )
                 
